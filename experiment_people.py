@@ -509,22 +509,22 @@ class Model:
 
         # UNCOMMENT BELOW LINES FOR TOY
         # ----------------------
-        entityTolist = []
+        # entityTolist = []
 
-        for j in range(len(candidates)):
-            temp = []
-            for i in range(len(candidate_l)):
-                if(entities[j] in self.list_map[group_lists[i]]):
-                    temp.append(1)
-                else:
-                    temp.append(0)
-            entityTolist.append(temp)
+        # for j in range(len(candidates)):
+        #     temp = []
+        #     for i in range(len(candidate_l)):
+        #         if(entities[j] in self.list_map[group_lists[i]]):
+        #             temp.append(1)
+        #         else:
+        #             temp.append(0)
+        #     entityTolist.append(temp)
         #------------------------------
 
 
         # COMMENT BELOW LINES FOR TOY
         # ----------------------------
-        # entityTolist = cancol.sliceEtoList(entityTolist, candidate_l_index, candidate_index)
+        entityTolist = cancol.sliceEtoList(entityTolist, candidate_l_index, candidate_index)
         # ----------------------------
         # print("ENTTOLIST : ", entityTolist)
 
@@ -627,9 +627,9 @@ class Model:
         print()
 
  
-        alpha = 0.3
-        beta = 0.3
-        gamma = 0.40
+        alpha = 0.5
+        beta = 0.1
+        gamma = 0.4
  
         relMat = np.around(sc.createSimMatrix(entityTolist, S, c_score, e_score, []), decimals = 2)
         
@@ -763,7 +763,7 @@ class Model:
         #                 betaScores[j][k[1]] += ((beta * (relMat[j][i[1]])))
         #                 counts[j][k[1]] += 1
 
-        for k in topGroups:
+        for k in topGroups[:1000]:
             for j in peerGroups[k[1]]:
                 # if(j in seed_inds):
                 #         continue
@@ -772,17 +772,19 @@ class Model:
                         continue
                     
                     # if(entityTolist[j][k[1]] == 1):
-                        # if(k[1] == 1147):
-                        #     print(entities[j], entities[i[1]], group_lists[k[1]])
-                        #     print("ADDING")
-                        #     print(relMat[j][i[1]])
-                        # if(k[1] == 1077):
-                        #     print(entities[j], entities[i[1]], group_lists[k[1]])
-                        #     print("ADDING")
-                        #     print(relMat[j][i[1]])
-                        # betaScores[j][k[1]] += ((beta * (relMat[j][i[1]])))
+                    if(k[1] == 1147):
+                        print(entities[j[1]], entities[i[1]], group_lists[k[1]])
+                        print("ADDING")
+                        print(relMat[j[1]][i[1]])
+                    if(k[1] == 1077):
+                        print(entities[j[1]], entities[i[1]], group_lists[k[1]])
+                        print("ADDING")
+                        print(relMat[j[1]][i[1]])
+                    # betaScores[j][k[1]] += ((beta * (relMat[j][i[1]])))
                         # counts[j][k[1]] += 1
-                    groupScores[k[1]] += ((beta*(relMat[j[1]][i[1]]))/x)
+                    # if(k[1] == 1147):
+                    #     print("adding ", entities[j[1]], entities[i[1]], relMat[j[1]][i[1]])
+                    groupScores[k[1]] += ((beta*(relMat[j[1]][i[1]]))/2 * x)
 
 
 
@@ -866,24 +868,65 @@ class Model:
             print()
  
         print("PRINTING SOMETHING")
-        # print(group_lists[1077])
-        # print( topGroups[1082][0])
-        # for j in peerGroups[1077]:
-        #     print(entities[j[1]], j[0])
-        # print()
+        print(group_lists[1077])
+        print( topGroups[1082][0])
+        for j in peerGroups[1077]:
+            print(entities[j[1]], j[0])
+        print()
         # STEP 8-12
-        for i in topGroups:
-            for k in peerGroups[i[1]]:
-                if(k[1] in seed_inds):
+        # for i in topGroups:
+        #     for k in peerGroups[i[1]]:
+        #         if(k[1] in seed_inds):
+        #             continue
+        #         for j in topGroups:
+        #             if(i[1] == j[1]):
+        #                 continue 
+        #             for k1 in peerGroups[j[1]]:
+        #                 # if(k1[1] == k[1]):
+        #                 #     continue
+        #                 # entityTolistC[k[1]][i[1]] -= ((gamma * relMat[k1[1]][k[1]])/((len(topGroups)-1)*x))
+        #                 groupScores[i[1]] -= ((gamma * relMat[k1[1]][k[1]])/((len(topGroups)-1)*x))
+
+        topGroups = []
+        topGroups.append(topGroups_new[0])
+        done_set = set()
+        done_set.add(topGroups[0][1])
+
+        print("TopGroups : ", topGroups)
+        # print(topGroups_new)
+        # for i in topGroups_new:
+        #     print(len(i))
+
+        for i in range(n_pg - 1):
+            top_score = -100000
+            ind_to_add = -1            
+            for j in topGroups_new:
+                if j[1] in done_set:
                     continue
-                for j in topGroups:
-                    if(i[1] == j[1]):
-                        continue 
-                    for k1 in peerGroups[j[1]]:
-                        # if(k1[1] == k[1]):
-                        #     continue
-                        # entityTolistC[k[1]][i[1]] -= ((gamma * relMat[k1[1]][k[1]])/((len(topGroups)-1)*x))
-                        groupScores[i[1]] -= ((gamma * relMat[k1[1]][k[1]])/((len(topGroups)-1)*x))
+                temp = 0
+                count = 0
+                for ent in peerGroups[j[1]]:
+                    for k in topGroups:
+                        for ents in peerGroups[k[1]]:
+                            # print(group_lists[j[1]], group_lists[k[1]])
+                            # print(entities[ent[1]], entities[ents[1]])
+                            temp -= gamma * (relMat[ent[1]][ents[1]])
+                            count += 1
+
+                # print(count)
+                if(count == 0):
+                    print("Count = 0 for", group_lists[j[1]])
+                    continue
+                if((j[0] + ((temp)/count)) > top_score):
+                    top_score = j[0] + ((temp)/count)
+                    ind = j[1]
+
+            print("Chose next facet", group_lists[ind])
+            print("Score Obtained : ", top_score)
+            topGroups.append([top_score, ind])
+            done_set.add(ind)
+
+
  
 #         peerGroups = [0]*len(c_score)
 #         for j in topGroups:        
@@ -923,25 +966,25 @@ class Model:
         print("GROUP SCORES :")
         # print(groupScores)
         #  To store top k groups
-        topGroups_new = []
-        tgInd = set()
-        for _ in range(len(c_score)):
-            mex = -1000000000
-            for i in topGroups:
-                if(i[1] in tgInd):
-                    continue
-                if(groupScores[i[1]] > mex):
-                    ind = i[1]
-                    mex = groupScores[i[1]]
-            topGroups_new.append(tuple([mex, ind]))
-            tgInd.add(ind)
+        # topGroups_new = []
+        # tgInd = set()
+        # for _ in range(len(c_score)):
+        #     mex = -1000000000
+        #     for i in topGroups:
+        #         if(i[1] in tgInd):
+        #             continue
+        #         if(groupScores[i[1]] > mex):
+        #             ind = i[1]
+        #             mex = groupScores[i[1]]
+        #     topGroups_new.append(tuple([mex, ind]))
+        #     tgInd.add(ind)
  
-        topGroups_new = sorted(topGroups_new, reverse=True)
+        # topGroups_new = sorted(topGroups_new, reverse=True)
 
-        topGroups = copy.deepcopy(topGroups_new)
+        # topGroups = copy.deepcopy(topGroups_new)
         # print(topGroups[:n_pg])
         print("PRINTING TOP K GROUPS ITER 1 ", len(topGroups))
-        for i in topGroups[:n_pg]:
+        for i in topGroups:
             print(group_lists[i[1]], i[0])
             # print(peerGroups[i[1]])
             for j in peerGroups[i[1]]:
